@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mood-Based Podcast Recommender</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to right, #ffe4ec, #f7f0ff);
+            color: #333;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(to right, #ff8eb3, #b47aff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        video {
+            border-radius: 12px;
+            box-shadow: 0 0 20px #b47aff;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background-color: #ff8eb3;
+            color: white;
+            font-weight: 600;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #ff6f9c;
+        }
+
+        .spinner {
+            margin: 20px auto;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #b47aff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .podcast-card {
+            background: #fff;
+            margin: 15px auto;
+            padding: 15px;
+            width: 80%;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(180, 122, 255, 0.2);
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        a {
+            color: #b47aff;
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🎧 Mood-Based Podcast Recommender</h1>
+
+    <div id="cam-section">
+        <h3>📷 Live Webcam Feed</h3>
+        <video id="webcam" autoplay playsinline width="300" height="250"></video>
+    </div>
+
+    <!-- Mood Detection Form -->
+    <form method="POST" action="/detect" onsubmit="showLoader(); stopWebcam();">
+        <button type="submit">💖 Detect Mood & Recommend</button>
+    </form>
+
+    <!-- Spinner Loader -->
+    <div id="loader" class="spinner" style="display:none;"></div>
+
+    <!-- Show Results -->
+    {% if emotion %}
+        <h2>Detected Mood: <span style="color:#b47aff">{{ emotion }}</span></h2>
+        <div>
+            {% for podcast in podcasts %}
+            <div class="podcast-card">
+                <h3>🎙️ {{ podcast.name }}</h3>
+                <p><em>{{ podcast.publisher }}</em></p>
+                <p>{{ podcast.description[:200] }}...</p>
+                <a href="{{ podcast.url }}" target="_blank">🔗 Listen on Spotify</a>
+            </div>
+            {% endfor %}
+        </div>
+        <!-- Try Again -->
+        <form method="GET" action="/">
+            <button type="submit" style="margin-top: 25px;">🔁 Try Again</button>
+        </form>
+    {% endif %}
+
+    <!-- JS for webcam + loader -->
+    <script>
+        let video = document.getElementById('webcam');
+        let streamRef = null;
+
+        // Webcam stream on load
+        if (navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    streamRef = stream;
+                    video.srcObject = stream;
+                })
+                .catch(err => console.error("Camera access denied:", err));
+        }
+
+        // Show loader on submit
+        function showLoader() {
+            document.getElementById("loader").style.display = "block";
+        }
+
+        // Stop webcam after submission
+        function stopWebcam() {
+            if (streamRef) {
+                streamRef.getTracks().forEach(track => track.stop());
+                video.style.display = "none";
+                document.getElementById("cam-section").style.display = "none";
+            }
+        }
+    </script>
+
+</body>
+</html>
